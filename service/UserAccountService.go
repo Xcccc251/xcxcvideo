@@ -4,6 +4,7 @@ import (
 	"XcxcVideo/common/define"
 	"XcxcVideo/common/helper"
 	"XcxcVideo/common/models"
+	"XcxcVideo/common/redisUtil"
 	"XcxcVideo/common/response"
 	"context"
 	"encoding/json"
@@ -13,6 +14,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var USER_ERROR_CODE = 403
@@ -113,7 +115,68 @@ func Login(c *gin.Context) {
 	var loginRsp models.LoginRsp
 	loginRsp.Token = token
 	loginRsp.User = userDto
-	response.ResponseOKWithData(c, "登录成功", loginRsp)
+	response.ResponseOKWithData(c, "欢迎回来", loginRsp)
 	return
+
+}
+
+func GetUserInfo(c *gin.Context) {
+	userId, _ := c.Get("userId")
+	var user models.UserVo
+	models.Db.Model(new(models.UserVo)).Where("id = ?", userId).First(&user)
+	if user.State == 2 {
+		response.ResponseFailWithData(c, 404, "账号已注销", nil)
+		return
+	}
+	if user.State == 1 {
+		response.ResponseFailWithData(c, 403, "账号封禁中", nil)
+		return
+	}
+
+	var userDto models.UserDto
+	copier.Copy(&userDto, &user)
+
+	videoList := redisUtil.GetSet(define.USER_VIDEO_UPLOAD + strconv.Itoa(userId.(int)))
+	if len(videoList) == 0 {
+		response.ResponseOKWithData(c, "", userDto)
+		return
+	}
+	var videoCount int
+	var loveCount int
+	var playCount int
+	videoCount = len(videoList)
+	loveCount, playCount = processVideoStats(videoList)
+	userDto.VideoCount = videoCount
+	userDto.LoveCount = loveCount
+	userDto.PlayCount = playCount
+	response.ResponseOKWithData(c, "", userDto)
+	return
+
+}
+
+// 优化遍历
+func processVideoStats(videoList []string) (int, int) {
+	var (
+		loveCount int
+		playCount int
+		wg        sync.WaitGroup
+		sem       = make(chan struct{}, 10) // 控制最大并发数为10
+	)
+
+	for _, videoId := range videoList {
+		wg.Add(1)
+		sem <- struct{}{}
+		vid, _ := strconv.Atoi(videoId)
+		//创建新线程查询视频统计数据
+		go func() {
+			defer wg.Done()
+			defer func() { <-sem }()
+			videoStats := GetVideoStatsById(vid)
+			loveCount += videoStats.Good
+			playCount += videoStats.Play
+		}()
+	}
+	wg.Wait()
+	return loveCount, playCount
 
 }

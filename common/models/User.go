@@ -53,11 +53,11 @@ type UserDto struct {
 	State        int     `gorm:"column:state;default:0" json:"state"`
 	Auth         int     `gorm:"column:auth;default:0" json:"auth"`
 	AuthMsg      string  `gorm:"column:auth_msg" json:"authMsg"`
-	VideoCount   int     `gorm:"column:video_count" json:"video_count"`
-	FollowsCount int     `gorm:"column:follows_count" json:"follows_count"`
-	FansCount    int     `gorm:"column:fans_count" json:"fans_count"`
-	LoveCount    int     `gorm:"column:love_count" json:"love_count"`
-	PlayCount    int     `gorm:"column:play_count" json:"play_count"`
+	VideoCount   int     `gorm:"column:video_count" json:"videoCount"`
+	FollowsCount int     `gorm:"column:follows_count" json:"followsCount"`
+	FansCount    int     `gorm:"column:fans_count" json:"fansCount"`
+	LoveCount    int     `gorm:"column:love_count" json:"loveCount"`
+	PlayCount    int     `gorm:"column:play_count" json:"playCount"`
 }
 type UserLoginOrRegisterDto struct {
 	Username          string `json:"username"`

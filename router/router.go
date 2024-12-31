@@ -12,6 +12,7 @@ func Router() *gin.Engine {
 	{
 		user.POST("/account/register", service.Registser)
 		user.POST("/account/login", service.Login)
+		user.GET("/personal/info", middlewares.AuthUserCheck(), service.GetUserInfo)
 	}
 	msg_unread := r.Group("/msg-unread")
 	{
@@ -20,6 +21,10 @@ func Router() *gin.Engine {
 	favorite := r.Group("/favorite")
 	{
 		favorite.GET("/get-all/user", middlewares.AuthUserCheck(), service.GetAllFavoritesForUser)
+	}
+	comment := r.Group("/comment")
+	{
+		comment.GET("/get-like-and-dislike", middlewares.AuthUserCheck(), service.GetUserLikeAndDislike)
 	}
 
 	return r
