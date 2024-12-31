@@ -5,7 +5,11 @@ import (
 	"XcxcVideo/common/helper"
 	"XcxcVideo/common/models"
 	"XcxcVideo/common/response"
+	"context"
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,7 +18,7 @@ import (
 var USER_ERROR_CODE = 403
 
 func Registser(c *gin.Context) {
-	var userRegisterDto models.UserRegisterDto
+	var userRegisterDto models.UserLoginOrRegisterDto
 	if err := c.ShouldBindJSON(&userRegisterDto); err != nil {
 		response.ResponseFailWithData(c, http.StatusInternalServerError, "参数错误", nil)
 		return
@@ -53,7 +57,7 @@ func Registser(c *gin.Context) {
 	models.Db.Model(new(models.User)).Select("id").Order("id desc").Limit(1).Find(&lastId)
 	var user models.User
 	newId := define.ID_PREFIX + int(lastId) + 1
-	newIdStr := strconv.Itoa(define.ID_PREFIX + int(lastId) + 1)
+	newIdStr := define.NICKNAME_PREFIX + strconv.Itoa(define.ID_PREFIX+int(lastId)+1)
 	user.Username = userRegisterDto.Username
 	user.Password, _ = helper.GetBcryptPassword(userRegisterDto.Password)
 	user.Description = "这个人很懒，什么都没有留下"
@@ -70,6 +74,46 @@ func Registser(c *gin.Context) {
 	//esUtil.addUser(new_user);
 	//TODO
 	response.ResponseOKWithData(c, "注册成功,欢迎加入我们", nil)
+	return
+
+}
+
+func Login(c *gin.Context) {
+	var userLoginDto models.UserLoginOrRegisterDto
+	if err := c.ShouldBindJSON(&userLoginDto); err != nil {
+		response.ResponseFailWithData(c, http.StatusInternalServerError, "参数错误", nil)
+		return
+	}
+	var dbUser models.UserVo
+	var count int64
+	db := models.Db.Model(new(models.UserVo)).Where("username = ?", userLoginDto.Username)
+	if db.Count(&count); count == 0 {
+		response.ResponseFailWithData(c, USER_ERROR_CODE, "用户名或密码错误", nil)
+		return
+	}
+	db.First(&dbUser)
+	if !helper.AnalysisBcryptPassword(dbUser.Password, userLoginDto.Password) {
+		response.ResponseFailWithData(c, USER_ERROR_CODE, "用户名或密码错误", nil)
+		return
+	}
+	if dbUser.State == 1 {
+		response.ResponseFailWithData(c, USER_ERROR_CODE, "账号封禁中", nil)
+		return
+	}
+	token, _ := helper.GenerateToken(dbUser.Id)
+	userJson, _ := json.Marshal(dbUser)
+	idStr := strconv.Itoa(dbUser.Id)
+	err := models.RDb.SetEX(context.Background(), define.TOKEN_PREFIX+idStr, token, define.TOKEN_TTL).Err()
+	if err != nil {
+		fmt.Println(err)
+	}
+	models.RDb.SetEX(context.Background(), define.USER_PREFIX+idStr, userJson, define.TOKEN_TTL)
+	var userDto models.UserDto
+	copier.Copy(&userDto, &dbUser)
+	var loginRsp models.LoginRsp
+	loginRsp.Token = token
+	loginRsp.User = userDto
+	response.ResponseOKWithData(c, "登录成功", loginRsp)
 	return
 
 }

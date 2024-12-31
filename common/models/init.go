@@ -22,7 +22,7 @@ func Init() *gorm.DB {
 			Colorful:      true,        // 彩色打印
 		},
 	)
-	dsn := "root:4861abc165@tcp(127.0.0.1:3306)/xcxc?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := "root:123456@tcp(127.0.0.1:3306)/xcxc?charset=utf8mb4&parseTime=True&loc=Local"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: newLogger,
 	})
@@ -34,8 +34,8 @@ func Init() *gorm.DB {
 
 func InitRedisDB() *redis.Client {
 	return redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
+		Addr:     "127.0.0.1:6379",
+		Password: "123456",
 		DB:       0,
 	})
 
