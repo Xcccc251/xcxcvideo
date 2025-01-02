@@ -154,13 +154,63 @@ func GetUserInfo(c *gin.Context) {
 
 }
 
+func AdminLogin(c *gin.Context) {
+	var adminLoginDto models.AdminLoginDto
+	if err := c.ShouldBindJSON(&adminLoginDto); err != nil {
+		response.ResponseFailWithData(c, http.StatusInternalServerError, "参数错误", nil)
+		return
+	}
+	var dbAdmin models.UserVo
+	err := models.Db.Model(new(models.UserVo)).Where("username = ?", adminLoginDto.Username).Find(&dbAdmin).Error
+	if err != nil {
+		response.ResponseFailWithData(c, USER_ERROR_CODE, "用户名或密码错误", nil)
+		return
+	}
+	if !helper.AnalysisBcryptPassword(dbAdmin.Password, adminLoginDto.Password) {
+		response.ResponseFailWithData(c, USER_ERROR_CODE, "用户名或密码错误", nil)
+		return
+	}
+	if dbAdmin.Role == 0 {
+		response.ResponseFailWithData(c, USER_ERROR_CODE, "您不是管理员，无权访问", nil)
+		return
+	}
+	if dbAdmin.State == 1 {
+		response.ResponseFailWithData(c, USER_ERROR_CODE, "账号封禁中", nil)
+		return
+	}
+	token, _ := helper.GenerateToken(dbAdmin.Id)
+	dbAdminJson, _ := json.Marshal(dbAdmin)
+	models.RDb.Set(context.Background(), define.TOKEN_PREFIX+strconv.Itoa(dbAdmin.Id), token, define.TOKEN_TTL)
+	models.RDb.Set(context.Background(), define.ADMIN_PREFIX+strconv.Itoa(dbAdmin.Id), dbAdminJson, define.ADMIN_LOGIN_TTL)
+	var userDto models.UserDto
+	copier.Copy(&userDto, &dbAdmin)
+	var loginRsp models.LoginRsp
+	loginRsp.Token = token
+	loginRsp.User = userDto
+	response.ResponseOKWithData(c, "欢迎回来", loginRsp)
+	return
+}
+func GetAdminInfo(c *gin.Context) {
+	userId, _ := c.Get("userId")
+	result, err := models.RDb.Get(context.Background(), define.ADMIN_PREFIX+strconv.Itoa(userId.(int))).Result()
+	var admin models.UserVo
+	if err != nil {
+		models.Db.Model(new(models.UserVo)).Where("id = ?", userId).First(&admin)
+		adminJson, _ := json.Marshal(admin)
+		redisUtil.Set(define.ADMIN_PREFIX+strconv.Itoa(userId.(int)), adminJson, define.ADMIN_LOGIN_TTL)
+	} else {
+		json.Unmarshal([]byte(result), &admin)
+	}
+	var userDto models.UserDto
+	copier.Copy(&userDto, &admin)
+	response.ResponseOKWithData(c, "", userDto)
+}
+
 // 优化遍历
-func processVideoStats(videoList []string) (int, int) {
+func processVideoStats(videoList []string) (loveCount int, playCount int) {
 	var (
-		loveCount int
-		playCount int
-		wg        sync.WaitGroup
-		sem       = make(chan struct{}, 10) // 控制最大并发数为10
+		wg  sync.WaitGroup
+		sem = make(chan struct{}, 10) // 控制最大并发数为10
 	)
 
 	for _, videoId := range videoList {

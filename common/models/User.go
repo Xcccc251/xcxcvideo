@@ -37,8 +37,8 @@ type UserVo struct {
 	Role        int     `gorm:"column:role;default:0" json:"role"`
 	Auth        int     `gorm:"column:auth;default:0" json:"auth"`
 	AuthMsg     string  `gorm:"column:auth_msg" json:"authMsg"`
-	CreateDate  string  `gorm:"column:created_at" json:"createDate"`
-	UpdateDate  string  `gorm:"column:updated_at" json:"updateDate"`
+	CreateDate  MyTime  `gorm:"column:created_at" json:"createDate"`
+	UpdateDate  MyTime  `gorm:"column:updated_at" json:"updateDate"`
 }
 type UserDto struct {
 	Id           int     `gorm:"column:id" json:"uid"`
@@ -63,6 +63,10 @@ type UserLoginOrRegisterDto struct {
 	Username          string `json:"username"`
 	Password          string `json:"password"`
 	ConfirmedPassword string `json:"confirmedPassword"`
+}
+type AdminLoginDto struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 type LoginRsp struct {
 	User  UserDto `json:"user"`
