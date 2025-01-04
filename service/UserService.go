@@ -126,3 +126,9 @@ func getUserById(userId int) models.UserDto {
 	userDto.PlayCount = playCount
 	return userDto
 }
+
+func IsAdmin(userId int) bool {
+	var user models.User
+	models.Db.Model(new(models.User)).Where("id = ?", userId).First(&user)
+	return user.Role != 0
+}

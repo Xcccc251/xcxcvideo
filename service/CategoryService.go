@@ -34,7 +34,7 @@ func GetCategoryList(c *gin.Context) {
 		}
 		var childrenCategory models.ChildrenCategory
 		copier.Copy(&childrenCategory, &v)
-		childrenCategory.RacTag = rcmTagList
+		childrenCategory.RcmTag = rcmTagList
 		categoryDtoTemp := categoryDtoMap[v.McId]
 		categoryDtoTemp.ScList = append(categoryDtoTemp.ScList, childrenCategory)
 		categoryDtoMap[v.McId] = categoryDtoTemp

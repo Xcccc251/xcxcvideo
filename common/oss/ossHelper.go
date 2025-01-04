@@ -71,3 +71,14 @@ func UploadFile(objectName string, localFileName io.Reader) (string, error) {
 	path := "https://" + bucketName + "." + "oss-cn-shanghai.aliyuncs.com" + "/" + objectName
 	return path, nil
 }
+
+func DelFile(objectName string) {
+	bucket, err := client.Bucket(bucketName)
+	if err != nil {
+		return
+	}
+	err = bucket.DeleteObject(objectName)
+	if err != nil {
+		return
+	}
+}

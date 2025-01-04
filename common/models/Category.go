@@ -23,7 +23,7 @@ type ChildrenCategory struct {
 	McName string   `gorm:"column:mc_name" json:"mcName"`
 	ScName string   `gorm:"column:sc_name" json:"scName"`
 	Descr  string   `gorm:"column:descr" json:"descr"`
-	RacTag []string `gorm:"column:rac_tag" json:"racTag"`
+	RcmTag []string `gorm:"column:rac_tag" json:"rcmTag"`
 }
 
 func (m *Category) TableName() string {

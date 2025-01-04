@@ -9,7 +9,7 @@ import (
 )
 
 func TestWalkDir(t *testing.T) {
-	number := getFilesNumberWithPrefix("C:\\Users\\86150\\GolandProjects\\XcXcVideo\\fileDir\\chunk", "chunk")
+	number := getFilesNumberWithPrefix("C:\\Users\\86150\\GolandProjects\\XcXcVideo\\fileDir\\chunk", "chunk-")
 	fmt.Println(number)
 
 }

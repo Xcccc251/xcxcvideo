@@ -6,6 +6,7 @@ var NICKNAME_PREFIX = "用户_"
 var GENDER_UNKOWN = 2
 var GENDER_MALE = 1
 var GENDER_FEMALE = 0
+
 var DEFAULT_CATEGORY_ORDER = []string{"anime", "guochuang", "douga", "game", "kichiku",
 	"music", "dance", "cinephile", "ent", "knowledge",
 	"tech", "information", "food", "life", "car",

@@ -8,6 +8,7 @@ import (
 
 func Router() *gin.Engine {
 	r := gin.Default()
+	r.Use(middlewares.CorsMiddleWare())
 	user := r.Group("/user")
 	{
 		user.POST("/account/register", service.Registser)
@@ -37,6 +38,25 @@ func Router() *gin.Engine {
 	category := r.Group("/category")
 	{
 		category.GET("/getall", service.GetCategoryList)
+	}
+	video := r.Group("/video")
+	{
+		video.GET("ask-chunk", middlewares.AuthUserCheck(), service.AskCurrentChunkByHash)
+		video.POST("upload-chunk", middlewares.AuthUserCheck(), service.UploadVideoChunk)
+		video.GET("cancel-upload", middlewares.AuthUserCheck(), service.CancelUpload)
+		video.POST("add", middlewares.AuthUserCheck(), service.UploadVideo)
+		video.GET("/getone", service.GetVideoById)
+	}
+	review_video := r.Group("/review/video")
+	{
+		review_video.GET("/total", middlewares.AuthAdminCheck(), service.GetTotalVideoCount)
+		review_video.GET("/getpage", middlewares.AuthAdminCheck(), service.GetReviewVideo)
+		review_video.GET("/getone", middlewares.AuthAdminCheck(), service.GetOneReviewVideo)
+	}
+	search := r.Group("/search")
+	{
+		search.GET("/hot/get", service.SearchHotList)
+
 	}
 
 	return r

@@ -8,7 +8,7 @@ import (
 	"strconv"
 )
 
-func GetVideoStatsById(vid int) models.VideoStats {
+func getVideoStatsById(vid int) models.VideoStats {
 	var videoStats models.VideoStats
 	videoId := strconv.Itoa(vid)
 	result, err := models.RDb.Get(context.Background(), define.VIDEOSTATS_PREFIX+videoId).Result()
@@ -18,7 +18,7 @@ func GetVideoStatsById(vid int) models.VideoStats {
 		return videoStats
 	}
 
-	models.Db.Model(new(models.VideoStats)).Where("vid = ?", videoId).First(&videoStats)
+	models.Db.Model(new(models.VideoStats)).Where("vid = ?", videoId).Find(&videoStats)
 	go func() {
 		videoStatsJson, _ := json.Marshal(videoStats)
 		models.RDb.Set(context.Background(), define.VIDEOSTATS_PREFIX+videoId, videoStatsJson, define.DEFAULT_TTL)

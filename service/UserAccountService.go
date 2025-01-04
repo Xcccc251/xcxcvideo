@@ -221,7 +221,7 @@ func processVideoStats(videoList []string) (loveCount int, playCount int) {
 		go func() {
 			defer wg.Done()
 			defer func() { <-sem }()
-			videoStats := GetVideoStatsById(vid)
+			videoStats := getVideoStatsById(vid)
 			loveCount += videoStats.Good
 			playCount += videoStats.Play
 		}()

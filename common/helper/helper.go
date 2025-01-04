@@ -238,3 +238,13 @@ func DiffOfIntArray(array1, array2 []int) []int {
 
 	return diff
 }
+
+func GetShuffle[T any](arr []T) []T {
+	newarr := arr
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(newarr), func(i, j int) {
+		newarr[i], newarr[j] = newarr[j], newarr[i]
+	})
+	return newarr
+
+}
