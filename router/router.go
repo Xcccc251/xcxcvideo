@@ -46,6 +46,8 @@ func Router() *gin.Engine {
 		video.GET("cancel-upload", middlewares.AuthUserCheck(), service.CancelUpload)
 		video.POST("add", middlewares.AuthUserCheck(), service.UploadVideo)
 		video.GET("/getone", service.GetVideoById)
+		video.POST("change/status", middlewares.AuthAdminCheck(), service.ChangeVideoStatus)
+		video.GET("/random/visitor", service.GetRandomVideos)
 	}
 	review_video := r.Group("/review/video")
 	{

@@ -25,4 +25,8 @@ var (
 	VIDEO_STATUS_3        = "xcxc:video_status:3"
 	VIDEOSTATS            = "xcxc:videoStats:"
 	USER_VIDEO_UPLOAD     = "xcxc:user_video_upload:"
+	DANMU_IDSET           = "xcxc:danmu_idset:"
+	COMMENT_VIDEO         = "xcxc:comment_video:"
+	COMMENT_REPLY         = "xcxc:comment_reply:"
+	REPLY_ZSET            = "xcxc:reply_zset:"
 )

@@ -5,6 +5,7 @@ import (
 	"XcxcVideo/common/models"
 	"context"
 	"encoding/json"
+	"gorm.io/gorm"
 	"strconv"
 )
 
@@ -25,4 +26,18 @@ func getVideoStatsById(vid int) models.VideoStats {
 	}()
 	return videoStats
 
+}
+
+func updateVideoStats(vid int, field string, icr bool, count int) {
+	db := models.Db.Model(new(models.VideoStats)).Where("vid = ?", vid)
+	if icr {
+		db.Update(field, gorm.Expr(field+"+?", count))
+	} else {
+		var videoStats models.VideoStats
+		db.Find(&videoStats)
+		if videoStats.Comment-count > 0 {
+			db.Update(field, gorm.Expr(field+"-?", count))
+		}
+	}
+	models.RDb.Del(context.Background(), define.VIDEOSTATS_PREFIX+strconv.Itoa(vid))
 }

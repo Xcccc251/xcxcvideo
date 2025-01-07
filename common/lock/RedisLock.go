@@ -1,8 +1,8 @@
 package lock
 
 import (
-	"SecKill/common/helper"
-	"SecKill/common/models"
+	"XcxcVideo/common/helper"
+	"XcxcVideo/common/models"
 	"context"
 	"fmt"
 	"os"

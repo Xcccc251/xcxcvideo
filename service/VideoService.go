@@ -3,7 +3,9 @@ package service
 import (
 	"XcxcVideo/common/define"
 	"XcxcVideo/common/helper"
+	"XcxcVideo/common/minIO"
 	"XcxcVideo/common/models"
+	"XcxcVideo/common/oss"
 	"XcxcVideo/common/response"
 	"context"
 	"encoding/json"
@@ -16,7 +18,7 @@ import (
 )
 
 func GetVideoById(c *gin.Context) {
-	id, _ := strconv.Atoi(c.Param("vid"))
+	id, _ := strconv.Atoi(c.Query("vid"))
 	video := getVideoById(id)
 	if video.Video.Status != 1 {
 		response.ResponseFailWithData(c, 404, "视频不存在", "")
@@ -35,6 +37,7 @@ func ChangeVideoStatus(c *gin.Context) {
 		db := models.Db.Model(new(models.VideoVo)).Where("id = ?", id)
 		var count int64
 		db.Count(&count)
+		db.Find(&video)
 		if count == 0 {
 			response.ResponseFailWithData(c, 404, "视频不见了", "")
 			return
@@ -51,12 +54,15 @@ func ChangeVideoStatus(c *gin.Context) {
 		models.RDb.SRem(context.Background(), define.VIDEO_STATUS+strconv.Itoa(lastStatus), video.Vid)
 		models.RDb.SAdd(context.Background(), define.VIDEO_STATUS+strconv.Itoa(status), video.Vid)
 		models.RDb.Del(context.Background(), define.VIDEO_PREFIX+strconv.Itoa(video.Vid))
+		response.ResponseOK(c)
+		return
 
 	} else if status == 2 {
 		var video models.VideoVo
 		db := models.Db.Model(new(models.VideoVo)).Where("id = ?", id)
 		var count int64
 		db.Count(&count)
+		db.Find(&video)
 		if count == 0 {
 			response.ResponseFailWithData(c, 404, "视频不见了", "")
 			return
@@ -73,11 +79,14 @@ func ChangeVideoStatus(c *gin.Context) {
 		models.RDb.SRem(context.Background(), define.VIDEO_STATUS+strconv.Itoa(lastStatus), video.Vid)
 		models.RDb.SAdd(context.Background(), define.VIDEO_STATUS+strconv.Itoa(status), video.Vid)
 		models.RDb.Del(context.Background(), define.VIDEO_PREFIX+strconv.Itoa(video.Vid))
+		response.ResponseOK(c)
+		return
 	} else {
 		var video models.VideoVo
 		db := models.Db.Model(new(models.VideoVo)).Where("id = ?", id)
 		var count int64
 		db.Count(&count)
+		db.Find(&video)
 		if count == 0 {
 			response.ResponseFailWithData(c, 404, "视频不见了", "")
 			return
@@ -94,9 +103,28 @@ func ChangeVideoStatus(c *gin.Context) {
 				return
 			}
 			//todo es
-			//lastStatus := video.Status
-			//video.Status = status
-
+			lastStatus := video.Status
+			video.Status = status
+			models.RDb.Del(context.Background(), define.VIDEO_STATUS+strconv.Itoa(lastStatus))
+			models.RDb.Del(context.Background(), define.VIDEO_PREFIX+strconv.Itoa(video.Vid))
+			models.RDb.Del(context.Background(), define.DANMU_IDSET+strconv.Itoa(video.Vid))
+			models.RDb.ZRem(context.Background(), define.USER_VIDEO_UPLOAD+strconv.Itoa(video.Uid), video.Vid)
+			go func() {
+				minIO.DelObject(videoUrl)
+				oss.DelFile(coverUrl)
+				result, err2 := models.RDb.ZRange(context.Background(), define.COMMENT_VIDEO+strconv.Itoa(video.Vid), 0, -1).Result()
+				if err2 != nil {
+					response.ResponseFailWithData(c, 500, "服务器错误", "")
+					return
+				}
+				models.RDb.Del(context.Background(), define.COMMENT_VIDEO+strconv.Itoa(video.Vid))
+				for _, v := range result {
+					commentId, _ := strconv.Atoi(v)
+					models.RDb.Del(context.Background(), define.COMMENT_REPLY+strconv.Itoa(commentId))
+				}
+			}()
+			response.ResponseOK(c)
+			return
 		} else {
 			response.ResponseFailWithData(c, 403, "无权限", "")
 			return
