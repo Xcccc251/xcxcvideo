@@ -11,9 +11,10 @@ import (
 
 func getVideoStatsById(vid int) models.VideoStats {
 	var videoStats models.VideoStats
+
 	videoId := strconv.Itoa(vid)
 	result, err := models.RDb.Get(context.Background(), define.VIDEOSTATS_PREFIX+videoId).Result()
-	if err != nil {
+	if err == nil {
 		json.Unmarshal([]byte(result), &videoStats)
 		models.RDb.Expire(context.Background(), define.VIDEOSTATS_PREFIX+videoId, define.DEFAULT_TTL)
 		return videoStats

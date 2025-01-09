@@ -116,7 +116,6 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	//}()
 	// 设置客户端的 Pong 消息处理器，用于检测客户端响应
 	conn.SetPongHandler(func(appData string) error {
-		log.Printf("Received Pong from userId: %d", userId)
 		// 当接收到 Pong 消息时，更新读取期限
 		_ = conn.SetReadDeadline(time.Now().Add(30 * time.Second))
 		return nil
@@ -127,7 +126,6 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		for {
 			// 每隔3秒发送 Ping 消息
 			err := conn.WriteMessage(websocket.PingMessage, []byte("ping"))
-			fmt.Println("send ping to", userId)
 			if err != nil {
 				log.Printf("Ping error for userId %d: %v", userId, err)
 				break

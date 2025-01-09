@@ -25,8 +25,6 @@ func SearchHotList(c *gin.Context) {
 		hotSearch := models.HotSearch{}
 		hotSearch.Content = v
 		score, _ := models.RDb.ZScore(context.Background(), define.SEARCH_WORD, v).Result()
-		fmt.Println(v)
-		fmt.Println(score)
 		hotSearch.Score = score
 		lastScore := getScoreByKeyword(v)
 		if lastScore == 0 {

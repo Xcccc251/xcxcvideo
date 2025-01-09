@@ -26,6 +26,7 @@ func Router() *gin.Engine {
 	msg_unread := r.Group("/msg-unread")
 	{
 		msg_unread.GET("/all", middlewares.AuthUserCheck(), service.GetMsgUnread)
+		msg_unread.POST("/clear", middlewares.AuthUserCheck(), service.ClearUnreadMsg)
 	}
 	favorite := r.Group("/favorite")
 	{
@@ -69,6 +70,11 @@ func Router() *gin.Engine {
 		search.GET("/hot/get", service.SearchHotList)
 		search.GET("/count", service.GetSearchCount)
 		search.GET("/video/only-pass", service.GetSearchVideo)
+	}
+
+	chat := r.Group("/msg/chat")
+	{
+		chat.GET("/recent-list", middlewares.AuthUserCheck(), service.GetRecentLIst)
 	}
 
 	return r

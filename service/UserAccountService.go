@@ -58,7 +58,7 @@ func Registser(c *gin.Context) {
 	var lastId int64
 	models.Db.Model(new(models.User)).Select("id").Order("id desc").Limit(1).Find(&lastId)
 	var user models.User
-	newId := define.ID_PREFIX + int(lastId) + 1
+	newId := int(lastId) + 1
 	newIdStr := define.NICKNAME_PREFIX + strconv.Itoa(define.ID_PREFIX+int(lastId)+1)
 	user.Username = userRegisterDto.Username
 	user.Password, _ = helper.GetBcryptPassword(userRegisterDto.Password)
