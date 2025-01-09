@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 type MsgUnread struct {
 	gorm.Model
-	UId     int `gorm:"column:id" json:"uid"`
+	UId     int `gorm:"column:uid" json:"uid"`
 	Reply   int `gorm:"column:reply;default:0" json:"reply"`
 	At      int `gorm:"column:at;default:0" json:"at"`
 	Love    int `gorm:"column:love;default:0" json:"love"`

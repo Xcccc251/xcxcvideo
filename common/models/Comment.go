@@ -30,6 +30,25 @@ type CommentVo struct {
 	CreateTime MyTime `gorm:"column:created_at" json:"createTime"`
 }
 
+type CommentGetVo struct {
+	More     bool          `json:"more"`
+	Comments []CommentTree `json:"comments"`
+}
+type CommentTree struct {
+	Id         int           `json:"id"`
+	Vid        int           `json:"vid"`
+	RootId     int           `json:"rootId"`
+	ParentId   int           `json:"parentId"`
+	Content    string        `json:"content"`
+	User       UserDto       `json:"user"`
+	ToUser     UserDto       `json:"toUser"`
+	Love       int           `json:"love"`
+	Bad        int           `json:"bad"`
+	Replies    []CommentTree `json:"replies"`
+	CreateTime MyTime        `json:"createTime"`
+	Count      int           `json:"count"`
+}
+
 func (Comment) TableName() string {
 	return "comment"
 }

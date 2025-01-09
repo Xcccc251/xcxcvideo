@@ -71,8 +71,17 @@ func Registser(c *gin.Context) {
 		response.ResponseFailWithData(c, USER_ERROR_CODE, "注册失败", nil)
 		return
 	}
-	//msgUnreadMapper.insert(new MsgUnread(new_user.getUid(),0,0,0,0,0,0));
-	//favoriteMapper.insert(new Favorite(null, new_user.getUid(), 1, 1, null, "默认收藏夹", "", 0, null));
+	var msgUnread models.MsgUnread
+	msgUnread.UId = newId
+	models.Db.Model(new(models.MsgUnread)).Create(&msgUnread)
+	favorite := models.Favorite{}
+	favorite.Uid = newId
+	favorite.Type = 1
+	favorite.Visible = 1
+	favorite.Title = "默认收藏夹"
+	models.Db.Model(new(models.Favorite)).Create(&favorite)
+	var userVo models.UserVo
+	models.Db.Model(new(models.UserVo)).Where("id = ?", newId).Find(&userVo)
 	//esUtil.addUser(new_user);
 	//TODO
 	response.ResponseOKWithData(c, "注册成功,欢迎加入我们", nil)

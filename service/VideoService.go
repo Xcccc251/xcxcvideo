@@ -2,6 +2,7 @@ package service
 
 import (
 	"XcxcVideo/common/define"
+	"XcxcVideo/common/es"
 	"XcxcVideo/common/helper"
 	"XcxcVideo/common/minIO"
 	"XcxcVideo/common/models"
@@ -49,7 +50,7 @@ func ChangeVideoStatus(c *gin.Context) {
 		}
 		lastStatus := video.Status
 		video.Status = status
-		//todo es
+		es.AddSearchVideo(video)
 		models.RDb.SAdd(context.Background(), define.USER_VIDEO_UPLOAD+strconv.Itoa(video.Uid), video.Vid)
 		models.RDb.SRem(context.Background(), define.VIDEO_STATUS+strconv.Itoa(lastStatus), video.Vid)
 		models.RDb.SAdd(context.Background(), define.VIDEO_STATUS+strconv.Itoa(status), video.Vid)
@@ -74,7 +75,6 @@ func ChangeVideoStatus(c *gin.Context) {
 		}
 		lastStatus := video.Status
 		video.Status = status
-		//todo es
 		models.RDb.SRem(context.Background(), define.USER_VIDEO_UPLOAD+strconv.Itoa(video.Uid), video.Vid)
 		models.RDb.SRem(context.Background(), define.VIDEO_STATUS+strconv.Itoa(lastStatus), video.Vid)
 		models.RDb.SAdd(context.Background(), define.VIDEO_STATUS+strconv.Itoa(status), video.Vid)
@@ -102,7 +102,7 @@ func ChangeVideoStatus(c *gin.Context) {
 				response.ResponseFailWithData(c, 500, "服务器错误", "")
 				return
 			}
-			//todo es
+			es.UpdateVideoStatus(video.Vid, status)
 			lastStatus := video.Status
 			video.Status = status
 			models.RDb.Del(context.Background(), define.VIDEO_STATUS+strconv.Itoa(lastStatus))
@@ -207,6 +207,39 @@ func getVideoByIds(ids []int, pageNum int, pageSize int) []models.VideoGetVo {
 	var videoList []models.VideoVo
 	models.Db.Model(new(models.VideoVo)).
 		Where("id in (?)", ids[pageNum:int(endIndex)]).
+		Where("status != ?", 3).
+		Find(&videoList)
+	var mapList []models.VideoGetVo
+
+	for _, v := range videoList {
+		var videoMap models.VideoGetVo
+		uid := v.Uid
+		vid := v.Vid
+		mcId := v.McId
+		scId := v.ScId
+		videoMap.Video = v
+		user := getUserById(uid)
+		videoStats := getVideoStatsById(vid)
+		var category models.Category
+		models.Db.Model(new(models.Category)).Where("mc_id = ? and sc_id = ?", mcId, scId).Find(&category)
+		videoMap.User = user
+		videoMap.Stats = videoStats
+		videoMap.Category = category
+		mapList = append(mapList, videoMap)
+	}
+
+	//sort.Slice(mapList, func(i, j int) bool {
+	//	vidI := mapList[i].Video.Vid
+	//	vidJ := mapList[j].Video.Vid
+	//	return vidI < vidJ
+	//})
+	return mapList
+}
+
+func getVideoByIdList(ids []int) []models.VideoGetVo {
+	var videoList []models.VideoVo
+	models.Db.Model(new(models.VideoVo)).
+		Where("id in (?)", ids).
 		Where("status != ?", 3).
 		Find(&videoList)
 	var mapList []models.VideoGetVo

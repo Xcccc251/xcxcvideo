@@ -13,8 +13,8 @@ var (
 	FAVORITE_PREFIX       = "xcxc:favorite:"
 	FAVORITE_VIDEO_PREFIX = "xcxc:favorite:video:"
 	DEFAULT_TTL           = time.Hour * 2
-	USER_LIKE_COMMENT     = "xcxc:user:like:comment:"
-	USER_DISLIKE_COMMENT  = "xcxc:user:dislike:comment:"
+	USER_LIKE_COMMENT     = "xcxc:user_like_comment:"
+	USER_DISLIKE_COMMENT  = "xcxc:user_dislike_comment:"
 	VIDEOSTATS_PREFIX     = "xcxc:videoStats:"
 	CATEGORYLIST          = "xcxc:categoryList"
 	VIDEO_PREFIX          = "xcxc:video:"
@@ -29,4 +29,7 @@ var (
 	COMMENT_VIDEO         = "xcxc:comment_video:"
 	COMMENT_REPLY         = "xcxc:comment_reply:"
 	REPLY_ZSET            = "xcxc:reply_zset:"
+	USER_VIDEO_HISTORY    = "xcxc:user_video_history:"
+	SEARCH_WORD           = "xcxc:search_word:"
+	HOT_SEARCH_WORDS      = "xcxc:hot_search_words:"
 )

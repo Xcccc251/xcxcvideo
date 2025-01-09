@@ -34,6 +34,10 @@ func Router() *gin.Engine {
 	comment := r.Group("/comment")
 	{
 		comment.GET("/get-like-and-dislike", middlewares.AuthUserCheck(), service.GetUserLikeAndDislike)
+		comment.POST("/add", middlewares.AuthUserCheck(), service.AddComment)
+		comment.GET("/getroot", service.GetRootComments)
+		comment.GET(("/get"), service.GetCommentTreeByVid)
+		comment.POST("love-or-not", middlewares.AuthUserCheck(), service.LikeOrDisLikeComment)
 	}
 	category := r.Group("/category")
 	{
@@ -48,6 +52,7 @@ func Router() *gin.Engine {
 		video.GET("/getone", service.GetVideoById)
 		video.POST("change/status", middlewares.AuthAdminCheck(), service.ChangeVideoStatus)
 		video.GET("/random/visitor", service.GetRandomVideos)
+		video.POST("play/user", middlewares.AuthUserCheck(), service.UserPlayVideo)
 	}
 	review_video := r.Group("/review/video")
 	{
@@ -55,10 +60,15 @@ func Router() *gin.Engine {
 		review_video.GET("/getpage", middlewares.AuthAdminCheck(), service.GetReviewVideo)
 		review_video.GET("/getone", middlewares.AuthAdminCheck(), service.GetOneReviewVideo)
 	}
+
 	search := r.Group("/search")
 	{
+		//search.GET("/hot/get", service.SearchHotList)
+		search.POST("/word/add", service.AddSearchWord)
+		search.GET("/word/get", service.GetSearchWord)
 		search.GET("/hot/get", service.SearchHotList)
-
+		search.GET("/count", service.GetSearchCount)
+		search.GET("/video/only-pass", service.GetSearchVideo)
 	}
 
 	return r
