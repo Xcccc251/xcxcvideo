@@ -3,14 +3,16 @@ package websocketServer
 import (
 	"XcxcVideo/common/define"
 	"XcxcVideo/common/models"
+	"XcxcVideo/commonService"
 	"context"
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"strconv"
+	"sync"
 	"time"
 )
 
-func sendWhisper(imMessage models.ImMessage) {
+func SendWhisper(imMessage models.ImMessage) {
 	fmt.Println(imMessage)
 	fromId := imMessage.UserId
 	messageMap := imMessage.Message
@@ -31,5 +33,28 @@ func sendWhisper(imMessage models.ImMessage) {
 		Member: chatDetail.Id,
 		Score:  float64(time.Now().Unix()),
 	})
+	online := commonService.UpdateChat(fromId, toId)
+	imMessageMap := map[string]interface{}{
+		"type":   "接收",
+		"online": online,
+		"detail": chatDetail,
+	}
+	sw := sync.WaitGroup{}
+	sw.Add(2)
+	go func() {
+		var chat models.Chat
+		models.Db.Model(new(models.Chat)).Where("user_id = ? and another_id = ?", fromId, toId).Find(&chat)
+		imMessageMap["chat"] = chat
+		sw.Done()
+	}()
+	go func() {
+		imMessageMap["user"] = commonService.GetUserById(fromId)
+		sw.Done()
+	}()
+	sw.Wait()
+	fmt.Println("发送消息：", toId, imMessageMap)
+	SendMessage(toId, "whisper", imMessageMap)
+	fmt.Println("发送消息：", fromId, imMessageMap)
+	SendMessage(fromId, "whisper", imMessageMap)
 
 }

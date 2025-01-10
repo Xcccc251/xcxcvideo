@@ -4,7 +4,7 @@ import (
 	"XcxcVideo/common/define"
 	"XcxcVideo/common/models"
 	"XcxcVideo/common/response"
-	websocketServer "XcxcVideo/websocket"
+	websocketServer "XcxcVideo/handler"
 	"context"
 	"encoding/json"
 	"github.com/gin-gonic/gin"

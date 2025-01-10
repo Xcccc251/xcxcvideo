@@ -4,8 +4,8 @@ import (
 	"XcxcVideo/common/define"
 	"XcxcVideo/common/models"
 	"XcxcVideo/common/response"
-	websocketServer "XcxcVideo/websocket"
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"strconv"
@@ -15,10 +15,11 @@ import (
 
 func GetRecentLIst(c *gin.Context) {
 	userId, _ := c.Get("userId")
+	fmt.Println("userId:", userId.(int))
 	var chatGetVoList = []models.ChatGetVo{}
 	var recentListGetVo = models.RecentListGetVo{}
 	offset, _ := strconv.Atoi(c.Query("offset"))
-	result, err := models.RDb.ZRange(context.Background(), define.CHAT_ZSET, int64(offset), int64(offset+9)).Result()
+	result, err := models.RDb.ZRange(context.Background(), define.CHAT_ZSET+strconv.Itoa(userId.(int)), int64(offset), int64(offset+9)).Result()
 	if err != nil || len(result) == 0 {
 		recentListGetVo.List = []models.ChatGetVo{}
 		response.ResponseOKWithData(c, "获取成功", recentListGetVo)
@@ -34,7 +35,7 @@ func GetRecentLIst(c *gin.Context) {
 		chatGetVoList = append(chatGetVoList, chatGetVo)
 	}
 
-	chatCount, _ := models.RDb.ZCard(context.Background(), define.CHAT_ZSET).Result()
+	chatCount, _ := models.RDb.ZCard(context.Background(), define.CHAT_ZSET+strconv.Itoa(userId.(int))).Result()
 	if offset+10 < int(chatCount) {
 		recentListGetVo.More = true
 	} else {
@@ -57,7 +58,7 @@ func CreateChat(c *gin.Context) {
 		if chat.IsDeleted == 1 {
 			db.Update("is_deleted", 0)
 			db.Update("latest_time", models.MyTime(time.Now()))
-			models.RDb.ZAdd(context.Background(), define.CHAT_ZSET, &redis.Z{
+			models.RDb.ZAdd(context.Background(), define.CHAT_ZSET+strconv.Itoa(userId.(int)), &redis.Z{
 				Member: chat.Id,
 				Score:  float64(time.Now().Unix()),
 			})
@@ -99,7 +100,7 @@ func CreateChat(c *gin.Context) {
 			LatestTime: models.MyTime(time.Now()),
 		}
 		models.Db.Model(new(models.Chat)).Create(&newChat)
-		models.RDb.ZAdd(context.Background(), define.CHAT_ZSET, &redis.Z{
+		models.RDb.ZAdd(context.Background(), define.CHAT_ZSET+strconv.Itoa(userId.(int)), &redis.Z{
 			Member: newChat.Id,
 			Score:  float64(time.Now().Unix()),
 		})
@@ -135,7 +136,6 @@ func UpdateWhisperOnline(c *gin.Context) {
 		messageMap["type"] = "已读"
 		messageMap["id"] = chat.Id
 		messageMap["count"] = chat.Unread
-		websocketServer.SendMessage(userId.(int), "whisper", messageMap)
 		subtractWhisper(userId.(int), chat.Unread)
 	}
 	db.Update("unread", 0)
@@ -172,9 +172,3 @@ func getChatDetails(uid int, aid int, offset int) models.ChatDetailGetVo {
 	return chatDetailGetVo
 
 }
-
-//func updateChat(from int, to int) {
-//	key := define.WHISPER_KEY + strconv.Itoa(to) + ":" + strconv.Itoa(from)
-//	result, _ := models.RDb.Exists(context.Background(), key).Result()
-//
-//}

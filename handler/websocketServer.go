@@ -100,15 +100,17 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	log.Printf("WebSocket connection established for userId: %d", userId)
 	// 设置客户端的 Pong 消息处理器，用于检测客户端响应
 	conn.SetPongHandler(func(appData string) error {
+		log.Printf("Received Pong message for userId %d", userId)
 		// 当接收到 Pong 消息时，更新读取期限
 		_ = conn.SetReadDeadline(time.Now().Add(30 * time.Second))
 		return nil
 	})
-
+	//
 	// 设置读取超时
 	go func() {
 		for {
-			// 每隔3秒发送 Ping 消息
+			// 每隔10秒发送 Ping 消息
+			//fmt.Println("Ping ", userId)
 			err := conn.WriteMessage(websocket.PingMessage, []byte("ping"))
 			if err != nil {
 				log.Printf("Ping error for userId %d: %v", userId, err)
@@ -124,7 +126,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			case imMessage := <-messageChan:
 				switch imMessage.Code {
 				case 101:
-					sendWhisper(imMessage)
+					SendWhisper(imMessage)
 				}
 			}
 		}

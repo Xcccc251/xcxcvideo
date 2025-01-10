@@ -64,7 +64,7 @@ func Router() *gin.Engine {
 
 	search := r.Group("/search")
 	{
-		//search.GET("/hot/get", service.SearchHotList)
+		//search.GET("/hot/get", commonService.SearchHotList)
 		search.POST("/word/add", service.AddSearchWord)
 		search.GET("/word/get", service.GetSearchWord)
 		search.GET("/hot/get", service.SearchHotList)
@@ -76,6 +76,8 @@ func Router() *gin.Engine {
 	{
 		chat.GET("/recent-list", middlewares.AuthUserCheck(), service.GetRecentLIst)
 		chat.GET("/create/:uid", middlewares.AuthUserCheck(), service.CreateChat)
+		chat.GET("/online", middlewares.AuthUserCheck(), service.UpdateWhisperOnline)
+		chat.GET("/outline", service.UpdateWhisperOutline)
 	}
 
 	return r
