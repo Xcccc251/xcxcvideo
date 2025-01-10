@@ -34,4 +34,5 @@ var (
 	HOT_SEARCH_WORDS      = "xcxc:hot_search_words:"
 	CHAT_ZSET             = "xcxc:chat_zset:"
 	CHAT_DETAILED_ZSET    = "xcxc:chat_detailed_zset:"
+	WHISPER_KEY           = "xcxc:whisper:"
 )

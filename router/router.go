@@ -75,6 +75,7 @@ func Router() *gin.Engine {
 	chat := r.Group("/msg/chat")
 	{
 		chat.GET("/recent-list", middlewares.AuthUserCheck(), service.GetRecentLIst)
+		chat.GET("/create/:uid", middlewares.AuthUserCheck(), service.CreateChat)
 	}
 
 	return r

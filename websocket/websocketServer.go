@@ -98,22 +98,6 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	defer connManager.Remove(userId)
 
 	log.Printf("WebSocket connection established for userId: %d", userId)
-	//go func() {
-	//	newmsg := struct {
-	//		Type string      `json:"Type"`
-	//		Data interface{} `json:"Data"`
-	//	}{
-	//		Type: "reply",
-	//		Data: "hello",
-	//	}
-	//	jsonMsg, _ := json.Marshal(&newmsg)
-	//
-	//	for {
-	//		fmt.Println("send to", userId)
-	//		connManager.Send(userId, jsonMsg)
-	//		time.Sleep(3 * time.Second)
-	//	}
-	//}()
 	// 设置客户端的 Pong 消息处理器，用于检测客户端响应
 	conn.SetPongHandler(func(appData string) error {
 		// 当接收到 Pong 消息时，更新读取期限
@@ -133,15 +117,39 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			time.Sleep(10 * time.Second)
 		}
 	}()
+	var messageChan = make(chan models.ImMessage, 10)
+	go func() {
+		for {
+			select {
+			case imMessage := <-messageChan:
+				switch imMessage.Code {
+				case 101:
+					sendWhisper(imMessage)
+				}
+			}
+		}
+	}()
 	// 后续循环读取消息
+
 	for {
 		_, message, err := conn.ReadMessage()
+		var messageMap map[string]interface{}
+		json.Unmarshal(message, &messageMap)
+		if code, ok := messageMap["code"].(float64); ok {
+			fmt.Println("code", code)
+			imMessage := models.ImMessage{}
+			imMessage.Code = int(code)
+			imMessage.Message = messageMap
+			imMessage.UserId = userId
+			messageChan <- imMessage
+		}
 		if err != nil {
 			log.Printf("Read error for userID %d: %v", userId, err)
 			break
 		}
 		log.Printf("Received from userID %d: %s", userId, message)
 	}
+
 }
 
 func SendMessage(userId int, typeOfMsg string, data interface{}) error {

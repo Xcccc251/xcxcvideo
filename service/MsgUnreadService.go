@@ -58,5 +58,16 @@ func ClearUnreadMsg(c *gin.Context) {
 	//todo 私聊
 	response.ResponseOK(c)
 	return
+}
 
+func subtractWhisper(userId int, count int) {
+	db := models.Db.Model(new(models.MsgUnread)).Where("uid = ?", userId)
+	var whisperCount int64
+	db.Select("whisper").Find(&whisperCount)
+	if whisperCount < int64(count) {
+		db.Update("whisper", 0)
+	} else {
+		db.Update("whisper", gorm.Expr("whisper-?", count))
+	}
+	models.RDb.Del(context.Background(), define.MSG_UNREAD+strconv.Itoa(userId))
 }

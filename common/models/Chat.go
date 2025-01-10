@@ -14,7 +14,7 @@ type Chat struct {
 type ChatGetVo struct {
 	Chat       Chat        `json:"chat"`
 	User       UserDto     `json:"user"`
-	ChatDetail interface{} `json:"chatDetail"`
+	ChatDetail interface{} `json:"detail"`
 }
 type ChatDetail struct {
 	Id         int    `gorm:"column:id" json:"id"`
