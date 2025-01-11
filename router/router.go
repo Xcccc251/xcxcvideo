@@ -83,6 +83,7 @@ func Router() *gin.Engine {
 	chatDetail := r.Group("/msg/chat-detailed")
 	{
 		chatDetail.GET("/get-more", middlewares.AuthUserCheck(), service.GetMoreChatDetail)
+		chatDetail.POST("/delete", middlewares.AuthUserCheck(), service.DeleteChatDetail)
 	}
 
 	return r

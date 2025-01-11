@@ -70,14 +70,17 @@ func WithdrawWhisper(imMessage models.ImMessage) {
 	db.Count(&count)
 	if count == 0 {
 		SendErrorMessage(imMessage.UserId, "消息不存在")
+		return
 	}
 	db.Find(&chatDetail)
 	if chatDetail.UserId != imMessage.UserId {
 		SendErrorMessage(imMessage.UserId, "无权限撤回")
+		return
 	}
 	timeDiff := time.Now().Unix() - time.Time(chatDetail.Time).Unix()
 	if timeDiff > 120 {
 		SendErrorMessage(imMessage.UserId, "消息超过2分钟，无法撤回")
+		return
 	}
 
 	db.Update("withdraw", 1)
