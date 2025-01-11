@@ -4,6 +4,7 @@ import (
 	"XcxcVideo/common/define"
 	"XcxcVideo/common/models"
 	"XcxcVideo/common/response"
+	websocketServer "XcxcVideo/handler"
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -20,6 +21,7 @@ func GetRecentLIst(c *gin.Context) {
 	var recentListGetVo = models.RecentListGetVo{}
 	offset, _ := strconv.Atoi(c.Query("offset"))
 	result, err := models.RDb.ZRange(context.Background(), define.CHAT_ZSET+strconv.Itoa(userId.(int)), int64(offset), int64(offset+9)).Result()
+	fmt.Println("查询结果", result)
 	if err != nil || len(result) == 0 {
 		recentListGetVo.List = []models.ChatGetVo{}
 		response.ResponseOKWithData(c, "获取成功", recentListGetVo)
@@ -127,7 +129,7 @@ func UpdateWhisperOnline(c *gin.Context) {
 	from, _ := strconv.Atoi(c.Query("from"))
 	userId, _ := c.Get("userId")
 	key := define.WHISPER_KEY + strconv.Itoa(userId.(int)) + ":" + strconv.Itoa(from)
-	models.RDb.Set(context.Background(), key, 1, 0)
+	models.RDb.Set(context.Background(), key, 1, time.Minute*10)
 	var chat models.Chat
 	db := models.Db.Model(new(models.Chat)).Where("user_id = ? and another_id = ?", from, userId.(int))
 	db.Find(&chat)
@@ -137,6 +139,7 @@ func UpdateWhisperOnline(c *gin.Context) {
 		messageMap["id"] = chat.Id
 		messageMap["count"] = chat.Unread
 		subtractWhisper(userId.(int), chat.Unread)
+		websocketServer.SendMessage(userId.(int), "whisper", messageMap)
 	}
 	db.Update("unread", 0)
 	response.ResponseOK(c)
@@ -161,7 +164,8 @@ func getChatDetails(uid int, aid int, offset int) models.ChatDetailGetVo {
 	} else {
 		chatDetailGetVo.More = false
 	}
-	chatIdList, _ := models.RDb.ZRange(context.Background(), key, int64(offset), int64(offset+19)).Result()
+	chatIdList, _ := models.RDb.ZRevRange(context.Background(), key, int64(offset), int64(offset+19)).Result()
+	fmt.Println("查询结果", chatIdList)
 	if len(chatIdList) == 0 {
 		chatDetailGetVo.List = []models.ChatDetail{}
 		return chatDetailGetVo

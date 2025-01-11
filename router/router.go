@@ -80,5 +80,10 @@ func Router() *gin.Engine {
 		chat.GET("/outline", service.UpdateWhisperOutline)
 	}
 
+	chatDetail := r.Group("/msg/chat-detailed")
+	{
+		chatDetail.GET("/get-more", middlewares.AuthUserCheck(), service.GetMoreChatDetail)
+	}
+
 	return r
 }

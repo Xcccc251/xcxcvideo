@@ -1,0 +1,5 @@
+package define
+
+var MESSAGE_CHAT_SEND = 101
+
+var MESSAGE_CHAT_WITHDRAW = 102

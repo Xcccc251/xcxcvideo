@@ -1,6 +1,7 @@
 package websocketServer
 
 import (
+	"XcxcVideo/common/define"
 	"XcxcVideo/common/helper"
 	"XcxcVideo/common/models"
 	"encoding/json"
@@ -125,9 +126,12 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 			select {
 			case imMessage := <-messageChan:
 				switch imMessage.Code {
-				case 101:
+				case define.MESSAGE_CHAT_SEND:
 					SendWhisper(imMessage)
+				case define.MESSAGE_CHAT_WITHDRAW:
+					WithdrawWhisper(imMessage)
 				}
+
 			}
 		}
 	}()
@@ -159,6 +163,22 @@ func SendMessage(userId int, typeOfMsg string, data interface{}) error {
 		Type: typeOfMsg,
 		Time: models.MyTime(time.Now()),
 		Data: data,
+	})
+	cm := connManager
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
+	conn, ok := cm.connections[userId]
+	if !ok {
+		return fmt.Errorf("user %s not connected", userId)
+	}
+	return conn.WriteMessage(websocket.TextMessage, message)
+}
+
+func SendErrorMessage(userId int, msg string) error {
+	message, _ := json.Marshal(ImResponse{
+		Type: "error",
+		Time: models.MyTime(time.Now()),
+		Data: msg,
 	})
 	cm := connManager
 	cm.mu.Lock()
