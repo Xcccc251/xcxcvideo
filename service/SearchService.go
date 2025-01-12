@@ -19,7 +19,7 @@ import (
 )
 
 func SearchHotList(c *gin.Context) {
-	result, _ := models.RDb.ZRange(context.Background(), define.SEARCH_WORD, 0, 9).Result()
+	result, _ := models.RDb.ZRevRange(context.Background(), define.SEARCH_WORD, 0, 9).Result()
 	var hotSearchList []models.HotSearch
 	for _, v := range result {
 		hotSearch := models.HotSearch{}

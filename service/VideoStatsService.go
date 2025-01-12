@@ -29,7 +29,7 @@ func getVideoStatsById(vid int) models.VideoStats {
 
 }
 
-func updateVideoStats(vid int, field string, icr bool, count int) {
+func UpdateVideoStats(vid int, field string, icr bool, count int) {
 	db := models.Db.Model(new(models.VideoStats)).Where("vid = ?", vid)
 	if icr {
 		db.Update(field, gorm.Expr(field+"+?", count))
