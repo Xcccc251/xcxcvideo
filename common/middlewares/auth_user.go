@@ -39,7 +39,11 @@ func AuthUserCheck() gin.HandlerFunc {
 		models.RDb.Expire(context.Background(), define.USER_PREFIX+userIdStr, define.TOKEN_TTL)
 		var user models.UserVo
 		json.Unmarshal([]byte(userResult), &user)
-
+		if user.Role == 2 {
+			c.Set("isAdmin", true)
+		} else {
+			c.Set("isAdmin", false)
+		}
 		c.Set("userId", userId)
 		c.Set("user", user)
 		c.Next()
