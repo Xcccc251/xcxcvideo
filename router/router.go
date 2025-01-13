@@ -85,6 +85,8 @@ func Router() *gin.Engine {
 		chatDetail.GET("/get-more", middlewares.AuthUserCheck(), service.GetMoreChatDetail)
 		chatDetail.POST("/delete", middlewares.AuthUserCheck(), service.DeleteChatDetail)
 	}
+	r.GET("/danmu-list/:vid", service.GetDanmuList)
+	r.POST("/danmu/delete", middlewares.AuthUserCheck(), service.DelDanmu)
 
 	return r
 }

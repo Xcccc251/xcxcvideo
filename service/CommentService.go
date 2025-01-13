@@ -38,7 +38,7 @@ func AddComment(c *gin.Context) {
 	comment.Uid = userId.(int)
 	comment.Content = content
 	models.Db.Model(new(models.Comment)).Create(&comment)
-	updateVideoStats(vid, "comment", true, 1)
+	UpdateVideoStats(vid, "comment", true, 1)
 	response.ResponseOKWithData(c, "评论成功", nil)
 	go func() {
 		if rootId != 0 {

@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 type DanmuMessage struct {
@@ -149,6 +150,7 @@ func sendDanmu(msg []byte, c *websocket.Conn, vid int) {
 	danmu.Fontsize = danmuMessage.Data.Fontsize
 	danmu.Mode = danmuMessage.Data.Mode
 	danmu.TimePoint = danmuMessage.Data.TimePoint
+	danmu.CreateDate = models.MyTime(time.Now())
 	//todo 消息队列
 	models.Db.Model(new(models.Danmu)).Create(&danmu)
 	service.UpdateVideoStats(vid, "danmu", true, 1)

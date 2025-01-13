@@ -44,7 +44,7 @@ func updatePlay(vid int, uid int) models.UserVideo {
 			Member: vid,
 			Score:  float64(time.Now().Unix()),
 		})
-		updateVideoStats(vid, "play", true, 1)
+		UpdateVideoStats(vid, "play", true, 1)
 	}()
 	return dbUserVideo
 }
