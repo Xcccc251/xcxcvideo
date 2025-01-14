@@ -10,6 +10,7 @@ import (
 	"XcxcVideo/common/response"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"math"
 	"math/rand"
@@ -154,7 +155,7 @@ func GetRandomVideos(c *gin.Context) {
 }
 
 func CumulativeVideoForVisitor(c *gin.Context) {
-	ids := c.Query("ids")
+	ids := c.Query("vids")
 	idList := strings.Split(ids, ",")
 	members, err := models.RDb.SMembers(context.Background(), define.VIDEO_STATUS+strconv.Itoa(1)).Result()
 	var videoCumulative models.VideoCumulative
@@ -170,10 +171,13 @@ func CumulativeVideoForVisitor(c *gin.Context) {
 			finalVidList = append(finalVidList, finalId)
 		}
 	}
-	finalVidList = helper.GetShuffle(finalVidList)[:10]
+	minIndex := math.Min(float64(len(finalVidList)), float64(10))
+	finalVidList = helper.GetShuffle(finalVidList)[:int(minIndex)]
 	videoList := getVideoByIds(finalVidList, 1, 10)
 	videoCumulative.Videos = videoList
 	videoCumulative.Vids = finalVidList
+	fmt.Println(len(members))
+	fmt.Println(len(finalVidList))
 	if len(members)-len(finalVidList)-10 > 0 {
 		videoCumulative.More = true
 	} else {
