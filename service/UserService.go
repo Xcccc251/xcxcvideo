@@ -132,3 +132,42 @@ func IsAdmin(userId int) bool {
 	models.Db.Model(new(models.User)).Where("id = ?", userId).First(&user)
 	return user.Role != 0
 }
+
+func GetUserWorks(c *gin.Context) {
+	var getUserWorks models.GetUserWorksDto
+	userId, _ := strconv.Atoi(c.Query("uid"))
+	rule, _ := strconv.Atoi(c.Query("rule"))
+	pageNo, _ := strconv.Atoi(c.Query("page"))
+	pageSize, _ := strconv.Atoi(c.Query("quantity"))
+
+	result, err := models.RDb.SMembers(context.Background(), define.USER_VIDEO_UPLOAD+strconv.Itoa(userId)).Result()
+	if err != nil {
+		getUserWorks.List = make([]models.VideoGetVo, 0)
+		getUserWorks.Count = 0
+		response.ResponseOKWithData(c, "", getUserWorks)
+		return
+	}
+	var ids []int
+	for _, idStr := range result {
+		id, _ := strconv.Atoi(idStr)
+		ids = append(ids, id)
+	}
+	getUserWorks.Count = len(ids)
+	switch rule {
+	case 1:
+		getUserWorks.List = getVideosWithDataByIdsOrderbyDesc(ids, "upload_date", pageNo, pageSize)
+		break
+	case 2:
+		getUserWorks.List = getVideosWithDataByIdsOrderbyDesc(ids, "play", pageNo, pageSize)
+		break
+	case 3:
+		getUserWorks.List = getVideosWithDataByIdsOrderbyDesc(ids, "good", pageNo, pageSize)
+		break
+	default:
+		getUserWorks.List = getVideosWithDataByIdsOrderbyDesc(ids, "upload_date", pageNo, pageSize)
+
+	}
+	response.ResponseOKWithData(c, "", getUserWorks)
+	return
+
+}

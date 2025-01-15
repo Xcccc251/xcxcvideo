@@ -56,6 +56,7 @@ func Router() *gin.Engine {
 		video.POST("play/user", middlewares.AuthUserCheck(), service.UserPlayVideo)
 		video.POST("/love-or-not", middlewares.AuthUserCheck(), service.LikeOrDisLikeVideo)
 		video.GET("/cumulative/visitor", service.CumulativeVideoForVisitor)
+		video.GET("/user-works", service.GetUserWorks)
 	}
 	review_video := r.Group("/review/video")
 	{

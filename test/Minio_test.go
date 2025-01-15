@@ -2,20 +2,27 @@ package test
 
 import (
 	"XcxcVideo/common/minIO"
+	"XcxcVideo/service"
 	"context"
 	"fmt"
-	"os"
 	"testing"
 )
 
 func TestMinioClient(t *testing.T) {
-	path := "C:\\Users\\86150\\GolandProjects\\XcXcVideo\\fileDir\\video\\chunk-dadaba323295068f03d01322132ec998-merged.mp4"
-	f, err := os.Open(path)
+	path, err := service.MergeSlices("chunk-bc074d8f00118e5e304cd75019f6a102")
 	if err != nil {
-		fmt.Println("open file err:", err.Error())
-		return
+		fmt.Println("err:", err)
 	}
-	minIO.UploadMP4("chunk-dadaba323295068f03d01322132ec998-merged.mp4", f)
+	fmt.Println("path:", path)
+
+	//path := "C:\\Users\\86150\\GolandProjects\\XcXcVideo\\fileDir\\video\\chunk-bc074d8f00118e5e304cd75019f6a102-merged.mp4"
+	//f, err := os.Open(path)
+	//if err != nil {
+	//	fmt.Println("open file err:", err.Error())
+	//	return
+	//}
+	//minIO.UploadMP4("chunk-bc074d8f00118e5e304cd75019f6a102-merged.mp4", f)
+
 	//	err := minIO.DelObject("606179f5-4908-447d-a71b-947f8129c07e.mp4")
 	//
 	//	if err != nil {

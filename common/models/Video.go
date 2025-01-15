@@ -36,6 +36,7 @@ type VideoVo struct {
 	VideoUrl   string `gorm:"column:video_url" json:"videoUrl"`
 	Status     int    `gorm:"column:status;default:0" json:"status"`
 	UploadDate MyTime `gorm:"column:created_at" json:"uploadDate"`
+	DeleteDate MyTime `gorm:"column:deleted_at" json:"deleteDate"`
 }
 type VideoUploadInfoDto struct {
 	gorm.Model
@@ -61,6 +62,10 @@ type VideoCumulative struct {
 	Videos []VideoGetVo `json:"videos"`
 	Vids   []int        `json:"vids"`
 	More   bool         `json:"more"`
+}
+type GetUserWorksDto struct {
+	Count int          `json:"count"`
+	List  []VideoGetVo `json:"list"`
 }
 
 func (Video) TableName() string {

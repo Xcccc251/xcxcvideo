@@ -86,7 +86,8 @@ func UploadVideo(c *gin.Context) {
 	videoUploadInfoDto.CoverUrl = coverUrl
 	videoUploadInfoDto.Uid = userId.(int)
 	go func() {
-		videoUrl, _ := mergeSlices("chunk-" + hash)
+		videoUrl, err := MergeSlices("chunk-" + hash)
+		fmt.Println(err)
 		var video models.Video
 		copier.Copy(&video, &videoUploadInfoDto)
 		video.VideoUrl = videoUrl
@@ -110,7 +111,8 @@ func UploadVideo(c *gin.Context) {
 
 }
 
-func mergeSlices(prefix string) (videoPath string, err error) {
+func MergeSlices(prefix string) (videoPath string, err error) {
+	fmt.Println(prefix)
 	// 搜索以 hash 开头的文件
 	files, err := findFilesByHash(prefix, define.CHUNK_PATH)
 	if err != nil {
@@ -127,7 +129,6 @@ func mergeSlices(prefix string) (videoPath string, err error) {
 	if err != nil {
 		return "", fmt.Errorf("创建输出文件失败: %w", err)
 	}
-	defer out.Close()
 
 	for _, file := range files {
 		if err := appendFileToOutput(file, out); err != nil {
@@ -135,7 +136,9 @@ func mergeSlices(prefix string) (videoPath string, err error) {
 		}
 	}
 
+	out.Seek(0, 0)
 	url, err := minIO.UploadMP4(prefix+"-merged.mp4", out)
+
 	if err != nil {
 		return "", err
 	}
@@ -151,7 +154,8 @@ func mergeSlices(prefix string) (videoPath string, err error) {
 			return nil
 		})
 	}()
-
+	out.Close()
+	os.Remove(outputFile)
 	return url, nil
 }
 

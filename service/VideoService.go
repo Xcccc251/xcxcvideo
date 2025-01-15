@@ -16,6 +16,7 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -305,4 +306,136 @@ func getVideoById(id int) models.VideoGetVo {
 	videoMap.Category = category
 
 	return videoMap
+}
+
+func getVideosWithDataByIdsOrderbyDesc(ids []int, column string, pageNo int, pageSize int) []models.VideoGetVo {
+	if column == "" {
+		var videoList []models.VideoVo
+		models.Db.Model(new(models.VideoVo)).
+			Where("id in (?)", ids).
+			Find(&videoList)
+		var mapList []models.VideoGetVo
+
+		for _, v := range videoList {
+			var videoMap models.VideoGetVo
+			if v.Status == 3 {
+				videoMap.Video = v
+				continue
+			}
+			uid := v.Uid
+			vid := v.Vid
+			mcId := v.McId
+			scId := v.ScId
+			videoMap.Video = v
+			var user models.UserDto
+			var videoStats models.VideoStats
+			wg := sync.WaitGroup{}
+			wg.Add(2)
+			go func() {
+				defer wg.Done()
+				user = getUserById(uid)
+			}()
+			go func() {
+				defer wg.Done()
+				videoStats = getVideoStatsById(vid)
+			}()
+			wg.Wait()
+			var category models.Category
+			models.Db.Model(new(models.Category)).Where("mc_id = ? and sc_id = ?", mcId, scId).Find(&category)
+			videoMap.User = user
+			videoMap.Stats = videoStats
+			videoMap.Category = category
+			mapList = append(mapList, videoMap)
+
+		}
+		return mapList
+	} else if column == "upload_date" {
+		var videoList []models.VideoVo
+		models.Db.Model(new(models.VideoVo)).
+			Where("id in (?)", ids).
+			Order("upload_date desc").
+			Offset((pageNo - 1) * pageSize).
+			Limit(pageSize).
+			Find(&videoList)
+		var mapList []models.VideoGetVo
+		for _, v := range videoList {
+			var videoMap models.VideoGetVo
+			if v.Status == 3 {
+				videoMap.Video = v
+				continue
+			}
+			uid := v.Uid
+			vid := v.Vid
+			mcId := v.McId
+			scId := v.ScId
+			videoMap.Video = v
+			var user models.UserDto
+			var videoStats models.VideoStats
+			wg := sync.WaitGroup{}
+			wg.Add(2)
+			go func() {
+				defer wg.Done()
+				user = getUserById(uid)
+			}()
+			go func() {
+				defer wg.Done()
+				videoStats = getVideoStatsById(vid)
+			}()
+			wg.Wait()
+			var category models.Category
+			models.Db.Model(new(models.Category)).Where("mc_id = ? and sc_id = ?", mcId, scId).Find(&category)
+			videoMap.User = user
+			videoMap.Stats = videoStats
+			videoMap.Category = category
+			mapList = append(mapList, videoMap)
+		}
+		return mapList
+	} else {
+		var videoStatsList []models.VideoStats
+		models.Db.Model(new(models.VideoStats)).
+			Where("vid in (?)", ids).
+			Order(column + " desc").
+			Offset((pageNo - 1) * pageSize).
+			Limit(pageSize).
+			Find(&videoStatsList)
+
+		var mapList []models.VideoGetVo
+		for _, v := range videoStatsList {
+			var video models.VideoVo
+			models.Db.Model(new(models.VideoVo)).
+				Where("id = ?", v.Vid).
+				Find(&video)
+
+			var videoMap models.VideoGetVo
+			if video.Status == 3 {
+				videoMap.Video = video
+				continue
+			}
+			uid := video.Uid
+			vid := video.Vid
+			mcId := video.McId
+			scId := video.ScId
+			videoMap.Video = video
+			var user models.UserDto
+			var videoStats models.VideoStats
+			wg := sync.WaitGroup{}
+			wg.Add(2)
+			go func() {
+				defer wg.Done()
+				user = getUserById(uid)
+			}()
+			go func() {
+				defer wg.Done()
+				videoStats = getVideoStatsById(vid)
+			}()
+			wg.Wait()
+			var category models.Category
+			models.Db.Model(new(models.Category)).Where("mc_id = ? and sc_id = ?", mcId, scId).Find(&category)
+			videoMap.User = user
+			videoMap.Stats = videoStats
+			videoMap.Category = category
+			mapList = append(mapList, videoMap)
+		}
+		return mapList
+	}
 }
