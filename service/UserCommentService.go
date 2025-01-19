@@ -45,6 +45,20 @@ func GetUserLikeAndDislike(c *gin.Context) {
 
 }
 
+func GetUpLikeAndDislike(c *gin.Context) {
+	userId, _ := strconv.Atoi(c.Query("uid"))
+	likeList := []int{}
+	var likeResult []string
+	likeResult = redisUtil.GetSet(define.USER_LIKE_COMMENT + strconv.Itoa(userId))
+	for _, v := range likeResult {
+		id, _ := strconv.Atoi(v)
+		likeList = append(likeList, id)
+	}
+	response.ResponseOKWithData(c, "获取成功", gin.H{
+		"userLike": likeList,
+	})
+}
+
 func LikeOrDisLikeComment(c *gin.Context) {
 	id, _ := strconv.Atoi(c.PostForm("id"))
 	isLikeStr := c.PostForm("isLike")

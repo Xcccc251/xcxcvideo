@@ -30,13 +30,13 @@ var upgrader = websocket.Upgrader{
 
 // 连接管理器
 type ConnectionManager struct {
-	connections map[int]*websocket.Conn // 用户ID到连接的映射
-	mu          sync.Mutex              // 保护并发访问
+	connections map[int][]*websocket.Conn // 用户ID到连接的映射
+	mu          sync.Mutex                // 保护并发访问
 }
 
 // 创建一个全局的连接管理器
 var connManager = ConnectionManager{
-	connections: make(map[int]*websocket.Conn),
+	connections: make(map[int][]*websocket.Conn),
 	mu:          sync.Mutex{},
 }
 
@@ -44,25 +44,40 @@ var connManager = ConnectionManager{
 func (cm *ConnectionManager) Add(userId int, conn *websocket.Conn) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
-	cm.connections[userId] = conn
+	cm.connections[userId] = append(cm.connections[userId], conn)
 }
 
 // 移除连接
-func (cm *ConnectionManager) Remove(userId int) {
+func (cm *ConnectionManager) Remove(userId int, conn *websocket.Conn) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
-	delete(cm.connections, userId)
+	conns, ok := cm.connections[userId]
+	if !ok {
+		return
+	}
+	for i, c := range conns {
+		if c == conn {
+			conns = append(conns[:i], conns[i+1:]...)
+			break
+		}
+	}
 }
 
-// 发送消息给指定用户
-func (cm *ConnectionManager) Send(userId int, message []byte) error {
+// 发送消息给指定用户的所有连接
+func (cm *ConnectionManager) Broadcast(userId int, message []byte) error {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
-	conn, ok := cm.connections[userId]
+	conns, ok := cm.connections[userId]
 	if !ok {
 		return fmt.Errorf("user %s not connected", userId)
 	}
-	return conn.WriteMessage(websocket.TextMessage, message)
+	for _, conn := range conns {
+		err := conn.WriteMessage(websocket.TextMessage, message)
+		if err != nil {
+			log.Printf("Failed to send message to user %s: %v", userId, err)
+		}
+	}
+	return nil
 }
 
 type Message struct {
@@ -96,7 +111,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	userId := userClaim.UserId
 
 	connManager.Add(userId, conn)
-	defer connManager.Remove(userId)
+	defer connManager.Remove(userId, conn)
 
 	log.Printf("WebSocket connection established for userId: %d", userId)
 	// 设置客户端的 Pong 消息处理器，用于检测客户端响应
@@ -167,11 +182,18 @@ func SendMessage(userId int, typeOfMsg string, data interface{}) error {
 	cm := connManager
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
-	conn, ok := cm.connections[userId]
+	conns, ok := cm.connections[userId]
 	if !ok {
 		return fmt.Errorf("user %s not connected", userId)
 	}
-	return conn.WriteMessage(websocket.TextMessage, message)
+	for _, conn := range conns {
+		err := conn.WriteMessage(websocket.TextMessage, message)
+		if err != nil {
+			log.Printf("Failed to send message to user %s: %v", userId, err)
+		}
+	}
+	return nil
+
 }
 
 func SendErrorMessage(userId int, msg string) error {
@@ -183,9 +205,16 @@ func SendErrorMessage(userId int, msg string) error {
 	cm := connManager
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
-	conn, ok := cm.connections[userId]
+	conns, ok := cm.connections[userId]
 	if !ok {
 		return fmt.Errorf("user %s not connected", userId)
 	}
-	return conn.WriteMessage(websocket.TextMessage, message)
+	for _, conn := range conns {
+		err := conn.WriteMessage(websocket.TextMessage, message)
+		if err != nil {
+			log.Printf("Failed to send message to user %s: %v", userId, err)
+		}
+	}
+	return nil
+
 }

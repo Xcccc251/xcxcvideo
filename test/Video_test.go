@@ -95,3 +95,16 @@ func appendFileToOutput(sliceFile string, out *os.File) error {
 	}
 	return nil
 }
+
+func isContain(a []int, x int) bool {
+	for _, v := range a {
+		if v == x {
+			return true
+		}
+	}
+	return false
+}
+
+func TestContain(t *testing.T) {
+	fmt.Println(isContain([]int{1}, 1))
+}

@@ -37,4 +37,7 @@ var (
 	WHISPER_KEY           = "xcxc:whisper:"
 	LOVE_VIDEO            = "xcxc:love_video:"
 	BELOVED_VIDEO_SET     = "xcxc:beloved_video_set:"
+
+	USER_FAVORITES      = "xcxc:user_favorites:"
+	USER_FAVORITE_VIDEO = "xcxc:user_favorite_video:"
 )

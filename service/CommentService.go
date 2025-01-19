@@ -84,7 +84,8 @@ func GetCommentTreeByVid(c *gin.Context) {
 		return
 
 	}
-	if offset+10 > int(result) {
+	fmt.Println(int(result))
+	if offset+10 >= int(result) {
 		commentGetVo.More = false
 	} else {
 		commentGetVo.More = true
@@ -121,8 +122,11 @@ func getRootCommentsByVid(vid int, offset int, typeOfQuery int) []models.Comment
 			Find(&commentVoList)
 	} else {
 		fmt.Println("时间查询")
-		rootIdsSet, _ = models.RDb.ZRange(context.Background(), define.COMMENT_VIDEO+strconv.Itoa(vid), int64(offset), int64(offset+9)).Result()
-		models.Db.Model(new(models.CommentVo)).Where("id in ?", rootIdsSet).Order("id desc").Find(&commentVoList)
+		rootIdsSet, _ = models.RDb.ZRevRange(context.Background(), define.COMMENT_VIDEO+strconv.Itoa(vid), int64(offset), int64(offset+9)).Result()
+		fmt.Println("查询结果", rootIdsSet)
+		models.Db.Model(new(models.CommentVo)).
+			Where("id in ?", rootIdsSet).
+			Order("id desc").Find(&commentVoList)
 	}
 	return commentVoList
 }

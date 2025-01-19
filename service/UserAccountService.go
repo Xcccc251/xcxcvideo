@@ -82,8 +82,7 @@ func Registser(c *gin.Context) {
 	models.Db.Model(new(models.Favorite)).Create(&favorite)
 	var userVo models.UserVo
 	models.Db.Model(new(models.UserVo)).Where("id = ?", newId).Find(&userVo)
-	//esUtil.addUser(new_user);
-	//TODO
+	//TODO esUtil.addUser(new_user);
 	response.ResponseOKWithData(c, "注册成功,欢迎加入我们", nil)
 	return
 

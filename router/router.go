@@ -31,6 +31,8 @@ func Router() *gin.Engine {
 	favorite := r.Group("/favorite")
 	{
 		favorite.GET("/get-all/user", middlewares.AuthUserCheck(), service.GetAllFavoritesForUser)
+		favorite.POST("/create", middlewares.AuthUserCheck(), service.AddFavorite)
+
 	}
 	comment := r.Group("/comment")
 	{
@@ -39,6 +41,7 @@ func Router() *gin.Engine {
 		comment.GET("/getroot", service.GetRootComments)
 		comment.GET(("/get"), service.GetCommentTreeByVid)
 		comment.POST("love-or-not", middlewares.AuthUserCheck(), service.LikeOrDisLikeComment)
+		comment.GET("/get-up-like", service.GetUpLikeAndDislike)
 	}
 	category := r.Group("/category")
 	{
@@ -87,6 +90,13 @@ func Router() *gin.Engine {
 	{
 		chatDetail.GET("/get-more", middlewares.AuthUserCheck(), service.GetMoreChatDetail)
 		chatDetail.POST("/delete", middlewares.AuthUserCheck(), service.DeleteChatDetail)
+	}
+
+	collect := r.Group("/video")
+	{
+		collect.POST("/collect", middlewares.AuthUserCheck(), service.CollectVideo)
+		collect.GET("/collected-fids", middlewares.AuthUserCheck(), service.GetCollectedFids)
+
 	}
 	r.GET("/danmu-list/:vid", service.GetDanmuList)
 	r.POST("/danmu/delete", middlewares.AuthUserCheck(), service.DelDanmu)

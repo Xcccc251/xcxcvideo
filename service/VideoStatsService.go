@@ -35,9 +35,9 @@ func UpdateVideoStats(vid int, field string, icr bool, count int) {
 	if icr {
 		db.Update(field, gorm.Expr(field+"+?", count))
 	} else {
-		var videoStats models.VideoStats
-		db.Find(&videoStats)
-		if videoStats.Comment-count > 0 {
+		var preCount int64
+		models.Db.Model(new(models.VideoStats)).Select(field).Where("vid = ?", vid).Find(&preCount)
+		if int(preCount)-count >= 0 {
 			db.Update(field, gorm.Expr(field+"-?", count))
 		}
 	}

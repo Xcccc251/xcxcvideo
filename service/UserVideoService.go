@@ -142,3 +142,15 @@ func updatePlay(vid int, uid int) models.UserVideo {
 	}()
 	return dbUserVideo
 }
+
+func collectOrCancel(uid int, vid int, isCollect bool) {
+	db := models.Db.Model(new(models.UserVideo)).
+		Where("vid = ? and uid = ?", vid, uid)
+	if isCollect {
+		db.Update("collect", 1)
+	} else {
+		db.Update("collect", 0)
+	}
+
+	UpdateVideoStats(vid, "collect", isCollect, 1)
+}
