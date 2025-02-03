@@ -121,6 +121,7 @@ func HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		_ = conn.SetReadDeadline(time.Now().Add(30 * time.Second))
 		return nil
 	})
+
 	//
 	// 设置读取超时
 	go func() {
