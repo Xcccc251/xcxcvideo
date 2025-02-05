@@ -349,11 +349,11 @@ func getVideosWithDataByIdsOrderbyDesc(ids []int, column string, pageNo int, pag
 
 		}
 		return mapList
-	} else if column == "upload_date" {
+	} else if column == "created_at" {
 		var videoList []models.VideoVo
 		models.Db.Model(new(models.VideoVo)).
 			Where("id in (?)", ids).
-			Order("upload_date desc").
+			Order("created_at desc").
 			Offset((pageNo - 1) * pageSize).
 			Limit(pageSize).
 			Find(&videoList)

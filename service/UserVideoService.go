@@ -132,7 +132,6 @@ func updatePlay(vid int, uid int) models.UserVideo {
 		db.Update("play", dbUserVideo.Play+1)
 		db.Update("play_time", models.MyTime(time.Now()))
 	}
-	//todo 消息队列
 	go func() {
 		models.RDb.ZAdd(context.Background(), define.USER_VIDEO_HISTORY+strconv.Itoa(vid), &redis.Z{
 			Member: vid,

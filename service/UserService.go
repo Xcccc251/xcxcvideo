@@ -9,6 +9,7 @@ import (
 	"XcxcVideo/common/response"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"path"
@@ -53,7 +54,6 @@ func UpdateUserInfo(c *gin.Context) {
 		Update("nickname", nickname).
 		Update("description", desc).
 		Update("gender", gender)
-	//todo 更新es
 	go func() {
 		models.RDb.Del(context.Background(), define.USER_PREFIX+strconv.Itoa(userId.(int)))
 		var user models.UserVo
@@ -155,7 +155,7 @@ func GetUserWorks(c *gin.Context) {
 	getUserWorks.Count = len(ids)
 	switch rule {
 	case 1:
-		getUserWorks.List = getVideosWithDataByIdsOrderbyDesc(ids, "upload_date", pageNo, pageSize)
+		getUserWorks.List = getVideosWithDataByIdsOrderbyDesc(ids, "created_at", pageNo, pageSize)
 		break
 	case 2:
 		getUserWorks.List = getVideosWithDataByIdsOrderbyDesc(ids, "play", pageNo, pageSize)
@@ -164,10 +164,85 @@ func GetUserWorks(c *gin.Context) {
 		getUserWorks.List = getVideosWithDataByIdsOrderbyDesc(ids, "good", pageNo, pageSize)
 		break
 	default:
-		getUserWorks.List = getVideosWithDataByIdsOrderbyDesc(ids, "upload_date", pageNo, pageSize)
+		getUserWorks.List = getVideosWithDataByIdsOrderbyDesc(ids, "created_at", pageNo, pageSize)
 
 	}
 	response.ResponseOKWithData(c, "", getUserWorks)
 	return
 
+}
+
+func GetUserWorksCount(c *gin.Context) {
+	uid := c.Query("uid")
+	fmt.Println(uid)
+	count, err := models.RDb.SCard(context.Background(), define.USER_VIDEO_UPLOAD+uid).Result()
+	if err != nil {
+		response.ResponseFailWithData(c, 500, "服务器错误", "")
+		return
+	}
+	response.ResponseOKWithData(c, "", count)
+	return
+
+}
+
+func GetUserLove(c *gin.Context) {
+	uid := c.Query("uid")
+	offset, _ := strconv.Atoi(c.Query("offset"))
+	quantity, _ := strconv.Atoi(c.Query("quantity"))
+	result, _ := models.RDb.ZRange(context.Background(), define.LOVE_VIDEO+uid, int64(offset), int64(offset+quantity)).Result()
+	var vids []int
+	for _, idStr := range result {
+		id, _ := strconv.Atoi(idStr)
+		vids = append(vids, id)
+	}
+	videoList := getVideosWithDataByIdsOrderbyDesc(vids, "", 1, len(vids))
+	response.ResponseOKWithData(c, "", videoList)
+	return
+}
+
+func GetUserCollectVideos(c *gin.Context) {
+	fid, _ := strconv.Atoi(c.Query("fid"))
+	rule, _ := strconv.Atoi(c.Query("rule"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", strconv.Itoa(define.DEFAULT_PAGE_NUM)))
+	quantity, _ := strconv.Atoi(c.DefaultQuery("quantity", strconv.Itoa(define.DEFAULT_PAGE_SIZE)))
+	var vids []int
+	var set []string
+	if rule == 1 {
+		set, _ = models.RDb.ZRange(context.Background(), define.FAVORITE_VIDEO_PREFIX+strconv.Itoa(fid), int64((page-1)*quantity), int64(page*quantity)).Result()
+	} else {
+		set, _ = models.RDb.ZRange(context.Background(), define.FAVORITE_VIDEO_PREFIX+strconv.Itoa(fid), 0, -1).Result()
+	}
+	for _, idStr := range set {
+		id, _ := strconv.Atoi(idStr)
+		vids = append(vids, id)
+	}
+	videoList := []models.VideoGetVo{}
+	switch rule {
+	case 1:
+		videoList = getVideosWithDataByIdsOrderbyDesc(vids, "", page, quantity)
+		break
+	case 2:
+		videoList = getVideosWithDataByIdsOrderbyDesc(vids, "play", page, quantity)
+		break
+	case 3:
+		videoList = getVideosWithDataByIdsOrderbyDesc(vids, "created_at", page, quantity)
+		break
+	default:
+		videoList = getVideosWithDataByIdsOrderbyDesc(vids, "", page, quantity)
+	}
+	getFavoriteDto := make([]map[string]interface{}, 0)
+
+	for _, c := range videoList {
+		mp := make(map[string]interface{})
+		var favoriteVideo models.FavoriteVideo
+		models.Db.Model(new(models.FavoriteVideo)).Where("fid = ?", fid).Where("vid = ?", c.Video.Vid).Find(&favoriteVideo)
+		mp["video"] = c.Video
+		mp["user"] = c.User
+		mp["category"] = c.Category
+		mp["stats"] = c.Stats
+		mp["info"] = favoriteVideo
+		getFavoriteDto = append(getFavoriteDto, mp)
+	}
+	response.ResponseOKWithData(c, "", getFavoriteDto)
+	return
 }

@@ -11,7 +11,6 @@ import (
 )
 
 func UpdateHotSearchWord() {
-	//todo 热搜词条算法
 	fmt.Println("每小时更新热搜词")
 	result, err := models.RDb.ZRange(context.Background(), define.SEARCH_WORD, 0, -1).Result()
 	if len(result) == 0 || err != nil {

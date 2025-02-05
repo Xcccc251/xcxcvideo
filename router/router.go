@@ -60,6 +60,10 @@ func Router() *gin.Engine {
 		video.POST("/love-or-not", middlewares.AuthUserCheck(), service.LikeOrDisLikeVideo)
 		video.GET("/cumulative/visitor", service.CumulativeVideoForVisitor)
 		video.GET("/user-works", service.GetUserWorks)
+		video.GET("/user-works-count", service.GetUserWorksCount)
+		video.GET("/user-love", service.GetUserLove)
+		video.GET("/user-collect", service.GetUserCollectVideos)
+
 	}
 	review_video := r.Group("/review/video")
 	{
@@ -75,6 +79,7 @@ func Router() *gin.Engine {
 		search.GET("/word/get", service.GetSearchWord)
 		search.GET("/hot/get", service.SearchHotList)
 		search.GET("/count", service.GetSearchCount)
+		search.GET("/user", service.GetSearchUser)
 		search.GET("/video/only-pass", service.GetSearchVideo)
 	}
 

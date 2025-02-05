@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	"github.com/jinzhu/copier"
 	"net/url"
 	"regexp"
 	"sort"
@@ -117,19 +118,19 @@ func GetSearchCount(c *gin.Context) {
 	sw := sync.WaitGroup{}
 	sw.Add(1)
 	videoCount := 0
-	userCount := 0
+	var userCount int64
 
 	go func() {
 		videoCount = es.GetSearchVideoCount(finalKeyword)
 		sw.Done()
 	}()
 	go func() {
-		//todo 查询用户数量
+		models.Db.Model(new(models.User)).Where("nickname like ?", "%"+finalKeyword+"%").Count(&userCount)
 	}()
 	sw.Wait()
 	var result []int
 	result = append(result, videoCount)
-	result = append(result, userCount)
+	result = append(result, int(userCount))
 	response.ResponseOKWithData(c, "", result)
 	return
 
@@ -146,5 +147,21 @@ func GetSearchVideo(c *gin.Context) {
 	vids := es.GetSearchVideo(finalKeyword, page, 30, true)
 	list := getVideoByIdList(vids)
 	response.ResponseOKWithData(c, "", list)
+	return
+}
+
+func GetSearchUser(c *gin.Context) {
+	keyword := c.Query("keyword")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", strconv.Itoa(define.DEFAULT_PAGE_NUM)))
+	finalKeyword, err := url.QueryUnescape(keyword)
+	if err != nil {
+		response.ResponseOKWithData(c, "内部错误", nil)
+		return
+	}
+	var users []models.User
+	models.Db.Model(new(models.User)).Where("nickname like ?", "%"+finalKeyword+"%").Offset((page - 1) * 30).Limit(30).Find(&users)
+	var userDtos []models.UserDto
+	copier.Copy(&userDtos, &users)
+	response.ResponseOKWithData(c, "", userDtos)
 	return
 }

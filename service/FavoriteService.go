@@ -3,7 +3,6 @@ package service
 import (
 	"XcxcVideo/common/define"
 	"XcxcVideo/common/models"
-	"XcxcVideo/common/redisUtil"
 	"XcxcVideo/common/response"
 	"context"
 	"encoding/json"
@@ -182,7 +181,13 @@ func addToFavorite(uid int, vid int, fids []int) {
 		Member: vid,
 		Score:  float64(time.Now().Unix()),
 	})
-	models.RDb.Del(context.Background(), define.USER_FAVORITES+strconv.Itoa(uid))
+	for _, fid := range fids {
+		models.RDb.ZAdd(context.Background(), define.FAVORITE_VIDEO_PREFIX+strconv.Itoa(fid), &redis.Z{
+			Member: vid,
+			Score:  float64(time.Now().Unix()),
+		})
+	}
+	models.RDb.Del(context.Background(), define.FAVORITE_PREFIX+strconv.Itoa(uid))
 
 }
 
@@ -196,8 +201,11 @@ func removeFromFavorite(uid int, vid int, fids []int) {
 		Where("count > ?", 0).
 		Update("count", gorm.Expr("count - ?", 1))
 
+	for _, fid := range fids {
+		models.RDb.ZRem(context.Background(), define.FAVORITE_VIDEO_PREFIX+strconv.Itoa(fid), vid)
+	}
 	models.RDb.ZRem(context.Background(), define.USER_FAVORITE_VIDEO, vid)
-	models.RDb.Del(context.Background(), define.USER_FAVORITES+strconv.Itoa(uid))
+	models.RDb.Del(context.Background(), define.FAVORITE_PREFIX+strconv.Itoa(uid))
 }
 
 func diffOfInt(a, b []int) []int {
@@ -259,14 +267,15 @@ func getFavorites(uid int, isOwner bool) []models.Favorite {
 	models.Db.Model(new(models.Favorite)).
 		Where("uid = ?", uid).
 		Order("fid desc").Find(&favoriteList)
-	for _, v := range favoriteList {
+	for i, v := range favoriteList {
 		if v.Cover == "" {
-			set := redisUtil.GetSet(define.FAVORITE_VIDEO_PREFIX + strconv.Itoa(v.Fid))
+			set, _ := models.RDb.ZRange(context.Background(), define.FAVORITE_VIDEO_PREFIX+strconv.Itoa(v.Fid), 0, 0).Result()
+			fmt.Println("set", set)
 			if len(set) > 0 {
 				vid, _ := strconv.Atoi(set[0])
 				var video models.Video
 				models.Db.Model(new(models.Video)).Where("id = ?", vid).Find(&video)
-				v.Cover = video.CoverUrl
+				favoriteList[i].Cover = video.CoverUrl
 			}
 		}
 

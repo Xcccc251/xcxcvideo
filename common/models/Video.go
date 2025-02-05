@@ -67,6 +67,10 @@ type GetUserWorksDto struct {
 	Count int          `json:"count"`
 	List  []VideoGetVo `json:"list"`
 }
+type GetFavoriteDto struct {
+	Count int                      `json:"count"`
+	List  []map[string]interface{} `json:"list"`
+}
 
 func (Video) TableName() string {
 	return "video"

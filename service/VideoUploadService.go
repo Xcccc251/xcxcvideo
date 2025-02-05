@@ -143,7 +143,6 @@ func MergeSlices(prefix string) (videoPath string, err error) {
 		return "", err
 	}
 	go func() {
-		//todo kafka
 		filepath.WalkDir(define.CHUNK_PATH, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
